@@ -46,3 +46,5 @@ class Ball(MoveObject, DrawObject, InitObject):
             self.y -= overlap / 2
             other.x += overlap / 2
             other.y += overlap / 2
+    def is_stop(self):
+        return self.vx == 0 and self.vy == 0

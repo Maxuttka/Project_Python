@@ -16,7 +16,9 @@ class Game(DrawObject, InitObject):
         self.cue = Cue(self.cue_ball, (width / 2, height / 2))
         self.run = True
         self.bot = Bot(self.cue_ball, self.balls, False)
-        self.score = 11
+        self.player_score = 0
+        self.bot_score = 0
+        self.player_turn = True
 
     def triangle(self):
         balls = []
@@ -43,6 +45,12 @@ class Game(DrawObject, InitObject):
         self.cue_ball.vx = 0
         self.cue_ball.vy = 0
 
+    def balls_stop(self):
+        for ball in self.balls:
+            if not ball.is_stop():
+                return False
+        return True
+
     def update(self):
         i = 0
         self.cue.move(pygame.mouse.get_pos())
@@ -60,7 +68,10 @@ class Game(DrawObject, InitObject):
                     return
                 else:
                     self.balls.remove(ball)
-                    self.score -= 1
+                    if self.player_turn:
+                        self.player_score += 1
+                    else:
+                        self.bot_score += 1
             self.table.wall_collision(ball)
         for ball1 in self.balls:
             for ball2 in self.balls[i+1:]:
@@ -71,18 +82,20 @@ class Game(DrawObject, InitObject):
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.run = False
-                elif event.type == pygame.MOUSEBUTTONUP:
+                elif event.type == pygame.MOUSEBUTTONUP and self.balls_stop():
                     self.cue.hit()
                     self.bot.bot_active = True
+                    self.player_turn = True
 
 
     def game_loop(self):
         clock = pygame.time.Clock()
         while self.run:
             self.input()
-            if self.bot.bot_active:
+            if self.bot.bot_active and self.balls_stop():
                 self.bot.find_ball()
                 self.bot.hit()
+                self.player_turn = False
             self.update()
             self.draw()
             pygame.display.flip()
@@ -94,8 +107,10 @@ class Game(DrawObject, InitObject):
             ball.draw()
         self.cue.draw()
         font = pygame.font.Font(None, 36)
-        score = font.render(f"Осталось шаров: {self.score}", True, (255, 255, 255))
-        screen.blit(score, (15, 15))
+        player_score_text = font.render(f"Игрок: {self.player_score}", True, (255, 255, 255))
+        bot_score_text = font.render(f"Бот: {self.bot_score}", True, (255, 255, 255))
+        screen.blit(player_score_text, (15, 15))
+        screen.blit(bot_score_text, (15, 50))
 
     def game_over(self):
         font = pygame.font.Font(None, 74)
